@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SCM Leader Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F2F1ED;
+  --border:#E4E2DC;--border2:#D0CEC6;
+  --text:#1A1917;--text2:#6B6860;--text3:#9D9B94;
+  --green-bg:#EAF3DE;--green-text:#3B6D11;
+  --amber-bg:#FAEEDA;--amber-text:#854F0B;
+  --red-bg:#FCEBEB;--red-text:#A32D2D;
+  --blue-bg:#E6F1FB;--blue-text:#185FA5;
+  --gray-bg:#F1EFE8;--gray-text:#5F5E5A;
+  --purple-bg:#EEEDFE;--purple-text:#534AB7;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50}
+.main{margin-left:220px;flex:1}
+.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace}
+.nav{padding:12px 0;flex:1;overflow-y:auto}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:8px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;color:var(--text2);transition:all .15s;border-left:2px solid transparent;font-size:13px}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:var(--text);background:var(--surface2);border-left-color:var(--text);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.date-display{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);line-height:1.6}
+.page-header{padding:24px 32px 18px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:40}
+.page-header-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.page-title{font-size:20px;font-weight:600}
+.page-subtitle{font-size:13px;color:var(--text3);margin-top:2px}
+.header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.metrics-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:20px 32px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+.metric-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.metric-value{font-size:26px;font-weight:300;font-family:'DM Mono',monospace;line-height:1}
+.metric-sub{font-size:11px;margin-top:5px;color:var(--text3)}
+.content{padding:0 32px 32px}
+.section{margin-bottom:28px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-weight:400}
+.btn:hover{background:var(--surface2);border-color:var(--text)}
+.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}
+.btn-primary:hover{background:#333}
+.btn svg{width:14px;height:14px}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+thead th{text-align:left;font-size:11px;font-weight:600;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.td-name{font-weight:500}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.bg-green{background:var(--green-bg);color:var(--green-text)}
+.bg-amber{background:var(--amber-bg);color:var(--amber-text)}
+.bg-red{background:var(--red-bg);color:var(--red-text)}
+.bg-blue{background:var(--blue-bg);color:var(--blue-text)}
+.bg-gray{background:var(--gray-bg);color:var(--gray-text)}
+.bg-purple{background:var(--purple-bg);color:var(--purple-text)}
+.action-cell{display:flex;gap:2px;align-items:center;justify-content:flex-end}
+.ibtn{background:none;border:none;cursor:pointer;padding:5px 7px;border-radius:6px;font-size:15px;line-height:1;transition:all .15s;color:var(--text3)}
+.ibtn-edit:hover{background:var(--blue-bg);color:var(--blue-text)}
+.ibtn-del:hover{background:var(--red-bg);color:var(--red-text)}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.product-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;transition:border-color .15s}
+.product-card:hover{border-color:var(--border2)}
+.product-card-title{font-weight:600;font-size:14px}
+.progress-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.product-info-item{font-size:12px;color:var(--text3)}
+.product-info-item span{color:var(--text);font-weight:500}
+.card-note{font-size:12px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-style:italic}
+.daily-list{display:flex;flex-direction:column;gap:8px}
+.daily-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;display:flex;gap:14px;align-items:flex-start}
+.daily-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);min-width:90px;padding-top:2px}
+.daily-body{flex:1;min-width:0}
+.daily-title{font-weight:500;font-size:14px;margin-bottom:3px}
+.daily-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:3px}
+.daily-note{font-size:12px;color:var(--text3)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:24px;width:min(500px,92vw);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:18px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);transition:border-color .15s;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--text)}
+.field textarea{resize:vertical;min-height:70px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.panel{display:none}
+.panel.active{display:block}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media(max-width:768px){
+  .sidebar{width:200px}
+  .main{margin-left:200px}
+  .metrics-row{grid-template-columns:repeat(2,1fr);padding:16px}
+  .content,.page-header{padding-left:16px;padding-right:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">SCM Dashboard</div>
+    <div class="logo-sub">Supply Chain Management</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPanel('summary',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Ringkasan
+    </div>
+    <div class="nav-label">Procurement</div>
+    <div class="nav-item" onclick="showPanel('vendors',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Vendor List
+    </div>
+    <div class="nav-item" onclick="showPanel('sourcing',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Sourcing Activity
+    </div>
+    <div class="nav-label">Product Dev</div>
+    <div class="nav-item" onclick="showPanel('products',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>Pipeline Produk
+    </div>
+    <div class="nav-label">Monitoring</div>
+    <div class="nav-item" onclick="showPanel('daily',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Daily Update
+    </div>
+  </nav>
+  <div class="sidebar-footer"><div class="date-display" id="sidebar-date"></div></div>
+</aside>
+
+<main class="main">
+
+  <!-- SUMMARY -->
+  <div id="panel-summary" class="panel active">
+    <div class="page-header">
+      <div class="page-header-row">
+        <div><div class="page-title">Ringkasan SCM</div><div class="page-subtitle">Semua status dalam satu tampilan</div></div>
+      </div>
+    </div>
+    <div class="metrics-row" id="metrics-summary"></div>
+    <div class="content">
+      <div class="section">
+        <div class="section-header"><div class="section-title">Vendor Perlu Perhatian</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Vendor</th><th>Status</th><th>Evaluasi</th><th>Catatan</th></tr></thead><tbody id="summary-vendor-tbl"></tbody></table></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><div class="section-title">Update Harian Terbaru</div></div>
+        <div class="daily-list" id="summary-daily-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VENDORS -->
+  <div id="panel-vendors" class="panel">
+    <div class="page-header">
+      <div class="page-header-row">
+        <div><div class="page-title">Vendor List</div><div class="page-subtitle">Manajemen vendor & evaluasi supplier</div></div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openModal('vendor',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Vendor
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content" style="padding-top:20px">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:4%">No</th><th style="width:20%">Nama Vendor</th><th style="width:13%">Kategori</th>
+            <th style="width:10%">Status</th><th style="width:8%">Nilai</th><th style="width:11%">PIC</th>
+            <th style="width:12%">Terakhir Order</th><th>Catatan</th><th style="width:8%"></th>
+          </tr></thead>
+          <tbody id="vendor-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOURCING -->
+  <div id="panel-sourcing" class="panel">
+    <div class="page-header">
+      <div class="page-header-row">
+        <div><div class="page-title">Sourcing Activity</div><div class="page-subtitle">Tracking aktivitas vendor sourcing</div></div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openModal('sourcing',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Aktivitas
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content" style="padding-top:20px">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:4%">No</th><th style="width:26%">Nama Proyek / Aktivitas</th>
+            <th style="width:18%">Vendor Kandidat</th><th style="width:11%">Status</th>
+            <th style="width:13%">Target Selesai</th><th>Catatan</th><th style="width:8%"></th>
+          </tr></thead>
+          <tbody id="sourcing-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div id="panel-products" class="panel">
+    <div class="page-header">
+      <div class="page-header-row">
+        <div><div class="page-title">Pipeline Produk Baru</div><div class="page-subtitle">Tracking development dari konsep ke launch</div></div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openModal('product',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Produk
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content" style="padding-top:20px">
+      <div class="product-grid" id="product-grid"></div>
+    </div>
+  </div>
+
+  <!-- DAILY -->
+  <div id="panel-daily" class="panel">
+    <div class="page-header">
+      <div class="page-header-row">
+        <div><div class="page-title">Daily Update</div><div class="page-subtitle">Log aktivitas harian procurement & product development</div></div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="openModal('daily',null)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Update
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content" style="padding-top:20px">
+      <div class="daily-list" id="daily-list"></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="saveModal()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='scm_v3';
+let DB={
+  vendors:[
+    {id:1,name:'PT Surya Makmur',cat:'Raw Material',status:'Aktif',eval:'A',pic:'Andi S.',lastOrder:'2 Mei 2025',notes:'Supplier utama bahan baku, reliable'},
+    {id:2,name:'CV Mitra Jaya',cat:'Packaging',status:'Aktif',eval:'B',pic:'Budi R.',lastOrder:'28 Apr 2025',notes:'Kemasan primer & sekunder'},
+    {id:3,name:'PT Indo Kimia',cat:'Chemical',status:'Evaluasi',eval:'C',pic:'Citra L.',lastOrder:'15 Apr 2025',notes:'Perlu re-audit kualitas Q2'},
+    {id:4,name:'UD Berkah Tani',cat:'Raw Material',status:'Aktif',eval:'A',pic:'Dian M.',lastOrder:'5 Mei 2025',notes:'Vendor alternatif bahan baku'},
+    {id:5,name:'PT Global Pack',cat:'Packaging',status:'Blacklist',eval:'-',pic:'-',lastOrder:'Jan 2025',notes:'Delay pengiriman berulang'},
+    {id:6,name:'CV Sinar Abadi',cat:'Services',status:'Aktif',eval:'B',pic:'Eko P.',lastOrder:'10 Apr 2025',notes:'Jasa pengiriman & logistik'},
+  ],
+  sourcing:[
+    {id:1,proj:'Sourcing Bahan Baku Q3 2025',vendor:'PT Nusantara, CV Prima, UD Raya',status:'On Going',target:'30 Jun 2025',notes:'Sudah 2 dari 3 vendor di-survey lapangan'},
+    {id:2,proj:'Vendor Packaging Baru',vendor:'5 kandidat (proses seleksi)',status:'Negosiasi',target:'15 Jun 2025',notes:'Menunggu sampel dari 3 vendor shortlist'},
+    {id:3,proj:'RFQ Chemical 2025',vendor:'PT Chem Indo',status:'Selesai',target:'1 Mei 2025',notes:'PO sudah terbit no. PO-2025-041'},
+    {id:4,proj:'Audit Vendor Existing',vendor:'Seluruh vendor aktif',status:'On Going',target:'31 Mei 2025',notes:'4 dari 6 vendor sudah diaudit'},
+  ],
+  products:[
+    {id:1,name:'Produk A \u2013 Variant Baru',stage:'Formulasi',pct:40,vendor:'PT Indo Kimia',target:'Sep 2025',notes:'Trial lab ke-2 dijadwalkan 20 Mei 2025'},
+    {id:2,name:'Produk B \u2013 Line Extension',stage:'Sampling',pct:70,vendor:'CV Mitra Jaya',target:'Jul 2025',notes:'Menunggu feedback approval dari QC'},
+    {id:3,name:'Produk C \u2013 Repackaging',stage:'Launch Ready',pct:95,vendor:'PT Global Pack (diganti)',target:'Jun 2025',notes:'Ganti vendor packaging, estimasi delay 2 minggu'},
+    {id:4,name:'Produk D \u2013 NPD Konsep',stage:'Konsep',pct:10,vendor:'TBD',target:'Des 2025',notes:'Brief produk sudah disusun, menunggu approval'},
+  ],
+  daily:[
+    {id:1,date:'8 Mei 2025',cat:'Procurement',item:'Follow up PO PT Surya Makmur',status:'Done',notes:'Konfirmasi ETA material 12 Mei 2025'},
+    {id:2,date:'8 Mei 2025',cat:'Product Dev',item:'Review sampel Produk B bersama QC',status:'On Progress',notes:'Feedback QC dijadwalkan besok pagi'},
+    {id:3,date:'7 Mei 2025',cat:'Procurement',item:'Evaluasi performa CV Mitra Jaya Q1',status:'Done',notes:'Nilai tetap B, monitor ketepatan jadwal kirim'},
+    {id:4,date:'7 Mei 2025',cat:'Sourcing',item:'Kirim RFQ ke 3 vendor packaging kandidat baru',status:'Done',notes:'Tunggu balasan maks 3 hari kerja'},
+    {id:5,date:'6 Mei 2025',cat:'Product Dev',item:'Brief formulasi Produk A ke lab',status:'Done',notes:'Lab konfirmasi bisa mulai trial ke-2 minggu depan'},
+  ]
+};
+try{const s=localStorage.getItem(KEY);if(s)DB=JSON.parse(s);}catch(e){}
+const persist=()=>localStorage.setItem(KEY,JSON.stringify(DB));
+
+// helpers
+const sMap={'Aktif':'bg-green','Evaluasi':'bg-amber','Blacklist':'bg-red','On Going':'bg-blue','Selesai':'bg-green','Negosiasi':'bg-purple','Pending':'bg-gray','Done':'bg-green','On Progress':'bg-amber','Launch Ready':'bg-purple','Sampling':'bg-blue','Formulasi':'bg-amber','Konsep':'bg-gray'};
+const eMap={'A':'bg-green','B':'bg-blue','C':'bg-amber','-':'bg-gray'};
+const sc={'Formulasi':'#EF9F27','Sampling':'#378ADD','Launch Ready':'#639922','Konsep':'#888780'};
+const bd=(s,m)=>`<span class="badge ${m[s]||'bg-gray'}">${s||''}</span>`;
+const badge=s=>bd(s,sMap), eBadge=s=>bd(s,eMap), cBadge=s=>`<span class="badge bg-gray">${s}</span>`;
+const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';}
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const selOpts=(opts,val)=>opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('');
+const typeToKey={vendor:'vendors',sourcing:'sourcing',product:'products',daily:'daily'};
+const acell=(type,id)=>{const k=typeToKey[type];return`<div class="action-cell">
+  <button class="ibtn ibtn-edit" onclick="openModal('${type}',${id})" title="Edit">✎</button>
+  <button class="ibtn ibtn-del" onclick="delItem('${k}',${id})" title="Hapus">✕</button>
+</div>`;};
+
+// renders
+function renderVendors(){
+  const el=document.getElementById('vendor-tbody');
+  if(!DB.vendors.length){el.innerHTML=`<tr><td colspan="9"><div class="empty">Belum ada vendor.</div></td></tr>`;return;}
+  el.innerHTML=DB.vendors.map((v,i)=>`<tr>
+    <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
+    <td class="td-name">${esc(v.name)}</td><td>${cBadge(v.cat)}</td>
+    <td>${badge(v.status)}</td><td>${eBadge(v.eval)}</td>
+    <td style="color:var(--text2);font-size:13px">${esc(v.pic)}</td>
+    <td style="color:var(--text3);font-size:12px;font-family:'DM Mono',monospace">${esc(v.lastOrder)||'-'}</td>
+    <td style="color:var(--text3);font-size:12px;max-width:160px">${esc(v.notes)}</td>
+    <td>${acell('vendor',v.id)}</td>
+  </tr>`).join('');
+}
+
+function renderSourcing(){
+  const el=document.getElementById('sourcing-tbody');
+  if(!DB.sourcing.length){el.innerHTML=`<tr><td colspan="7"><div class="empty">Belum ada aktivitas sourcing.</div></td></tr>`;return;}
+  el.innerHTML=DB.sourcing.map((s,i)=>`<tr>
+    <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:11px">${i+1}</td>
+    <td class="td-name">${esc(s.proj)}</td>
+    <td style="color:var(--text2);font-size:12px">${esc(s.vendor)}</td>
+    <td>${badge(s.status)}</td>
+    <td style="color:var(--text2);font-size:12px;font-family:'DM Mono',monospace">${esc(s.target)}</td>
+    <td style="color:var(--text3);font-size:12px">${esc(s.notes)}</td>
+    <td>${acell('sourcing',s.id)}</td>
+  </tr>`).join('');
+}
+
+function renderProducts(){
+  const el=document.getElementById('product-grid');
+  if(!DB.products.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1">Belum ada produk dalam pipeline.</div>`;return;}
+  el.innerHTML=DB.products.map(p=>`
+    <div class="product-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+        <div class="product-card-title">${esc(p.name)}</div>
+        <div class="action-cell">
+          <button class="ibtn ibtn-edit" onclick="openModal('product',${p.id})" title="Edit">✎</button>
+          <button class="ibtn ibtn-del" onclick="delItem('products',${p.id})" title="Hapus" style="margin-left:2px">✕</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">${badge(p.stage)}</div>
+      <div class="progress-track"><div class="progress-fill" style="width:${p.pct}%;background:${sc[p.stage]||'#888'}"></div></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:right;font-family:'DM Mono',monospace">${p.pct}% selesai</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div class="product-info-item">Vendor: <span>${esc(p.vendor)||'-'}</span></div>
+        <div class="product-info-item">Target: <span>${esc(p.target)||'-'}</span></div>
+      </div>
+      ${p.notes?`<div class="card-note">${esc(p.notes)}</div>`:''}
+    </div>`).join('');
+}
+
+function renderDaily(){
+  const el=document.getElementById('daily-list');
+  const sorted=[...DB.daily].sort((a,b)=>b.id-a.id);
+  if(!sorted.length){el.innerHTML=`<div class="empty">Belum ada update harian.</div>`;return;}
+  el.innerHTML=sorted.map(d=>`
+    <div class="daily-item">
+      <div class="daily-date">${esc(d.date)}</div>
+      <div class="daily-body">
+        <div class="daily-meta">${cBadge(d.cat)} ${badge(d.status)}</div>
+        <div class="daily-title">${esc(d.item)}</div>
+        ${d.notes?`<div class="daily-note">${esc(d.notes)}</div>`:''}
+      </div>
+      <div class="action-cell" style="flex-shrink:0">
+        <button class="ibtn ibtn-edit" onclick="openModal('daily',${d.id})" title="Edit">✎</button>
+        <button class="ibtn ibtn-del" onclick="delItem('daily',${d.id})" title="Hapus">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderSummary(){
+  const aktif=DB.vendors.filter(v=>v.status==='Aktif').length;
+  const evalV=DB.vendors.filter(v=>v.status==='Evaluasi').length;
+  const srcA=DB.sourcing.filter(s=>s.status!=='Selesai').length;
+  const done=DB.daily.filter(d=>d.status==='Done').length;
+  document.getElementById('metrics-summary').innerHTML=`
+    <div class="metric-card"><div class="metric-label">Vendor Aktif</div><div class="metric-value">${aktif}</div><div class="metric-sub" style="color:var(--green-text)">dari ${DB.vendors.length} total</div></div>
+    <div class="metric-card"><div class="metric-label">Perlu Evaluasi</div><div class="metric-value">${evalV}</div><div class="metric-sub" style="color:var(--amber-text)">butuh tindak lanjut</div></div>
+    <div class="metric-card"><div class="metric-label">Sourcing Aktif</div><div class="metric-value">${srcA}</div><div class="metric-sub" style="color:var(--blue-text)">aktivitas berjalan</div></div>
+    <div class="metric-card"><div class="metric-label">Pipeline Produk</div><div class="metric-value">${DB.products.length}</div><div class="metric-sub" style="color:var(--purple-text)">dalam pengembangan</div></div>
+    <div class="metric-card"><div class="metric-label">Task Selesai</div><div class="metric-value">${done}</div><div class="metric-sub" style="color:var(--green-text)">dari ${DB.daily.length} total</div></div>`;
+  const attn=DB.vendors.filter(v=>v.status==='Evaluasi'||v.status==='Blacklist');
+  document.getElementById('summary-vendor-tbl').innerHTML=attn.length
+    ?attn.map(v=>`<tr><td class="td-name">${esc(v.name)}</td><td>${badge(v.status)}</td><td>${eBadge(v.eval)}</td><td style="font-size:12px;color:var(--text3)">${esc(v.notes)}</td></tr>`).join('')
+    :`<tr><td colspan="4"><div class="empty">Semua vendor dalam kondisi baik.</div></td></tr>`;
+  const recent=[...DB.daily].sort((a,b)=>b.id-a.id).slice(0,3);
+  document.getElementById('summary-daily-list').innerHTML=recent.map(d=>`
+    <div class="daily-item">
+      <div class="daily-date">${esc(d.date)}</div>
+      <div class="daily-body">
+        <div class="daily-meta">${cBadge(d.cat)} ${badge(d.status)}</div>
+        <div class="daily-title">${esc(d.item)}</div>
+        ${d.notes?`<div class="daily-note">${esc(d.notes)}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderAll(){renderVendors();renderSourcing();renderProducts();renderDaily();renderSummary();}
+
+function showPanel(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  renderAll();
+}
+
+// modal
+let mType='', mId=null;
+const today=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+const cats={vendor:['Raw Material','Packaging','Chemical','Services','Lainnya'],sourcing:['On Going','Negosiasi','Selesai','Pending'],product:['Konsep','Formulasi','Sampling','Launch Ready'],daily:['On Progress','Done','Pending']};
+const catItems=['Procurement','Sourcing','Product Dev','Vendor','Lainnya'];
+
+function buildVendorForm(v){
+  return`
+  <div class="field-row">
+    <div class="field"><label>Nama Vendor</label><input id="f-name" placeholder="PT / CV / UD ..." value="${esc(v?v.name:'')}"/></div>
+    <div class="field"><label>Kategori</label><select id="f-cat">${selOpts(cats.vendor,v?v.cat:'Raw Material')}</select></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Status</label><select id="f-status">${selOpts(['Aktif','Evaluasi','Blacklist'],v?v.status:'Aktif')}</select></div>
+    <div class="field"><label>Nilai Evaluasi</label><select id="f-eval">${selOpts(['A','B','C','-'],v?v.eval:'A')}</select></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>PIC</label><input id="f-pic" placeholder="Nama PIC..." value="${esc(v?v.pic:'')}"/></div>
+    <div class="field"><label>Terakhir Order</label><input id="f-lastorder" placeholder="5 Mei 2025" value="${esc(v?v.lastOrder:'')}"/></div>
+  </div>
+  <div class="field"><label>Catatan</label><textarea id="f-notes" placeholder="Keterangan singkat...">${esc(v?v.notes:'')}</textarea></div>`;
+}
+
+function buildSourcingForm(s){
+  return`
+  <div class="field"><label>Nama Proyek / Aktivitas</label><input id="f-proj" placeholder="Sourcing Bahan Baku Q3..." value="${esc(s?s.proj:'')}"/></div>
+  <div class="field"><label>Vendor Kandidat</label><input id="f-vendor" placeholder="Nama vendor atau jumlah kandidat..." value="${esc(s?s.vendor:'')}"/></div>
+  <div class="field-row">
+    <div class="field"><label>Status</label><select id="f-status">${selOpts(cats.sourcing,s?s.status:'On Going')}</select></div>
+    <div class="field"><label>Target Selesai</label><input id="f-target" placeholder="30 Jun 2025" value="${esc(s?s.target:'')}"/></div>
+  </div>
+  <div class="field"><label>Catatan / Progress</label><textarea id="f-notes" placeholder="Progress, kendala, milestone...">${esc(s?s.notes:'')}</textarea></div>`;
+}
+
+function buildProductForm(p){
+  return`
+  <div class="field"><label>Nama Produk / Proyek</label><input id="f-name" placeholder="Produk A \u2013 Variant Baru" value="${esc(p?p.name:'')}"/></div>
+  <div class="field-row">
+    <div class="field"><label>Stage</label><select id="f-stage">${selOpts(cats.product,p?p.stage:'Konsep')}</select></div>
+    <div class="field"><label>Progress (%)</label><input id="f-pct" type="number" min="0" max="100" placeholder="0\u2013100" value="${p?p.pct:''}"/></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Vendor Terlibat</label><input id="f-vendor" placeholder="Nama vendor..." value="${esc(p?p.vendor:'')}"/></div>
+    <div class="field"><label>Target Launch</label><input id="f-target" placeholder="Sep 2025" value="${esc(p?p.target:'')}"/></div>
+  </div>
+  <div class="field"><label>Catatan</label><textarea id="f-notes" placeholder="Kendala, milestone berikutnya...">${esc(p?p.notes:'')}</textarea></div>`;
+}
+
+function buildDailyForm(d){
+  return`
+  <div class="field-row">
+    <div class="field"><label>Tanggal</label><input id="f-date" value="${esc(d?d.date:today)}"/></div>
+    <div class="field"><label>Kategori</label><select id="f-cat">${selOpts(catItems,d?d.cat:'Procurement')}</select></div>
+  </div>
+  <div class="field"><label>Aktivitas / Task</label><input id="f-item" placeholder="Apa yang dikerjakan hari ini..." value="${esc(d?d.item:'')}"/></div>
+  <div class="field"><label>Status</label><select id="f-status">${selOpts(cats.daily,d?d.status:'On Progress')}</select></div>
+  <div class="field"><label>Catatan / Hasil</label><textarea id="f-notes" placeholder="Hasil, kendala, follow up yang diperlukan...">${esc(d?d.notes:'')}</textarea></div>`;
+}
+
+const titleMap={
+  vendor:id=>id!==null?'Edit Vendor':'Tambah Vendor Baru',
+  sourcing:id=>id!==null?'Edit Sourcing Activity':'Tambah Sourcing Activity',
+  product:id=>id!==null?'Edit Produk Development':'Tambah Produk Development',
+  daily:id=>id!==null?'Edit Daily Update':'Tambah Daily Update'
+};
+
+function openModal(type,id){
+  mType=type; mId=id;
+  document.getElementById('modal-title').textContent=titleMap[type](id);
+  const dbKey=typeToKey[type];
+  const existing=id!==null?DB[dbKey].find(x=>x.id===id)||null:null;
+  const builders={vendor:buildVendorForm,sourcing:buildSourcingForm,product:buildProductForm,daily:buildDailyForm};
+  document.getElementById('modal-body').innerHTML=builders[type](existing);
+  const saveBtn=document.querySelector('.modal-footer .btn-primary');
+  if(saveBtn)saveBtn.textContent=id!==null?'Simpan Perubahan':'Simpan';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');mId=null;}
+function handleOverlayClick(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+
+function saveModal(){
+  const isEdit=mId!==null, nid=isEdit?mId:Date.now();
+  const upd=(arr,obj)=>isEdit?arr.map(x=>x.id===mId?obj:x):[...arr,obj];
+  if(mType==='vendor'){
+    if(!g('f-name'))return alert('Nama vendor wajib diisi.');
+    DB.vendors=upd(DB.vendors,{id:nid,name:g('f-name'),cat:g('f-cat'),status:g('f-status'),eval:g('f-eval'),pic:g('f-pic'),lastOrder:g('f-lastorder')||'-',notes:g('f-notes')});
+  }else if(mType==='sourcing'){
+    if(!g('f-proj'))return alert('Nama proyek wajib diisi.');
+    DB.sourcing=upd(DB.sourcing,{id:nid,proj:g('f-proj'),vendor:g('f-vendor'),status:g('f-status'),target:g('f-target'),notes:g('f-notes')});
+  }else if(mType==='product'){
+    if(!g('f-name'))return alert('Nama produk wajib diisi.');
+    DB.products=upd(DB.products,{id:nid,name:g('f-name'),stage:g('f-stage'),pct:Math.min(100,Math.max(0,parseInt(g('f-pct'))||0)),vendor:g('f-vendor'),target:g('f-target'),notes:g('f-notes')});
+  }else if(mType==='daily'){
+    if(!g('f-item'))return alert('Aktivitas wajib diisi.');
+    DB.daily=upd(DB.daily,{id:nid,date:g('f-date'),cat:g('f-cat'),item:g('f-item'),status:g('f-status'),notes:g('f-notes')});
+  }
+  persist(); closeModal(); renderAll();
+}
+
+function delItem(dbKey,id){
+  if(!confirm('Yakin ingin menghapus data ini?'))return;
+  DB[dbKey]=DB[dbKey].filter(x=>x.id!==id);
+  persist(); renderAll();
+}
+
+const now=new Date();
+document.getElementById('sidebar-date').innerHTML=
+  now.toLocaleDateString('id-ID',{weekday:'long'})+',<br>'+
+  now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+renderAll();
+</script>
+</body>
+</html>
